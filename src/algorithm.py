@@ -1,6 +1,6 @@
 import numpy as np
 import queue
-from src import utils
+import utils
 
 
 class Board:

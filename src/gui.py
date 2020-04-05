@@ -1,6 +1,6 @@
 import tkinter as tk
 from enum import Enum
-from src import algorithm as al, utils
+import algorithm as al, utils
 import numpy as np
 
 
@@ -24,7 +24,7 @@ class App(tk.Tk):
 
         self.active = ActiveButton.none
 
-        self.board = algorithm.get_board()
+        self.board = a_star.get_board()
 
         def canvas_click(event):
             x, y = event.x, event.y
@@ -75,7 +75,7 @@ class App(tk.Tk):
         def execute():
             reset()
 
-            result = algorithm.exec()
+            result = a_star.exec()
 
             if result == -1:
                 self.message['text'] = "Es necesario introducir un \n punto de inicio y otro de meta."
@@ -87,7 +87,7 @@ class App(tk.Tk):
 
         def new_board(rows, columns):
             self.board = al.Board(rows, columns)
-            algorithm.set_board(self.board)
+            a_star.set_board(self.board)
 
             if rows > 0 and columns > 0:
                 if rows <= 100 and columns <= 100:
@@ -229,11 +229,3 @@ class App(tk.Tk):
             button['fg'] = colors[1]
             button['borderwidth'] = colors[2]
             button['relief'] = colors[3]
-
-
-if __name__ == "__main__":
-    algorithm = al.AStar(al.Board(6, 6))
-    app = App(algorithm)
-    '''al.exec()'''
-    app.window.mainloop()
-
