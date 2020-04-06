@@ -1,6 +1,6 @@
 import numpy as np
 import queue
-import utils
+import math
 
 
 class Board:
@@ -94,7 +94,7 @@ class Cell:
         if 'father' in kwargs:
             self.father = kwargs['father']
 
-            self.g = self.father.get_g() + utils.calculate_dist(self.father.get_pos(), self.pos)
+            self.g = self.father.get_g() + calculate_dist(self.father.get_pos(), self.pos)
         else:
             self.father = None
 
@@ -151,10 +151,10 @@ class AStar:
         if goal is None or start is None:
             return -1
 
-        h = utils.calculate_dist(goal, start)
+        h = calculate_dist(goal, start)
 
         current = Cell(self.board.get_start(), h=h)
-        goal = tuple(self.board.get_goal())
+        goal = tuple(goal)
 
         open_list = []
         close_list = {tuple(current.get_pos()): current}
@@ -217,7 +217,7 @@ def get_path(cell):
 
 def calculate_h(cells, goal):
     for cell in cells:
-        cell.set_h(utils.calculate_dist(cell.pos, goal))
+        cell.set_h(calculate_dist(cell.pos, goal))
 
 
 def calculate_g(cell):
@@ -229,8 +229,6 @@ def calculate_g(cell):
     =-1 means that the 'upper'/'left' row/col is out bounds 
     and =1 means that the 'lower'/'right' row/col is out bounds
 '''
-
-
 def get_adj_cells(board, cell, rows=0, cols=0):
     """Internal function"""
     pos = cell.get_pos()
@@ -276,3 +274,7 @@ def discard_closed_cells(closed_list, open_list, cells):
             new_list.append(cell)
 
     return new_list
+
+
+def calculate_dist(pos1, pos2):
+    return math.sqrt((math.pow(pos1[0]-pos2[0], 2) + (math.pow(pos1[1]-pos2[1], 2))))

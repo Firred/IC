@@ -16,7 +16,7 @@ class App(tk.Tk):
     def __init__(self, a_star):
         self.window = tk.Tk()
         self.window.title("A*")
-        self.canvas = tk.Canvas(self.window, width=500, height=500, borderwidth=0, highlightthickness=0)
+        self.canvas = tk.Canvas(self.window, width=1000, height=800, borderwidth=0, highlightthickness=0)
         self.canvas.pack(side="left", fill="both", expand=1, ipadx=2, ipady=2, padx=20, pady=5)
 
         self.cellWidth = 25
@@ -91,11 +91,13 @@ class App(tk.Tk):
 
             if rows > 0 and columns > 0:
                 if rows <= 100 and columns <= 100:
+                    size = self.canvas.winfo_screenwidth(), self.canvas.winfo_screenheight()
                     self.canvas.destroy()
-                    self.canvas = tk.Canvas(self.window, width=1000, height=800, borderwidth=0, highlightthickness=0)
+                    self.canvas = tk.Canvas(self.window, width=size[0], height=size[1], borderwidth=0,
+                                            highlightthickness=0)
                     self.rect = np.empty((rows, columns))
 
-                    cell_size = 1000/columns if 1000/columns < 800/rows else 800/rows
+                    cell_size = (size[0]-300)/columns if (size[0]-300)/columns < (size[1]-100)/rows else (size[1]-100)/rows
 
                     for row in range(rows):
                         for column in range(columns):
