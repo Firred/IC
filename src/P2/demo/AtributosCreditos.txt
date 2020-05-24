@@ -1,0 +1,1 @@
+Moroso,Antigüedad(años),Ingresos(Eur./mes),Trabajo fijo,Conceder

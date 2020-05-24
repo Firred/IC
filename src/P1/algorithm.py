@@ -220,10 +220,6 @@ def calculate_h(cells, goal):
         cell.set_h(calculate_dist(cell.pos, goal))
 
 
-def calculate_g(cell):
-    cell.set_g(cell.get)
-
-
 ''' rows and cols indicates whenever cell collides with the limits of the board.
     rows/cols=0 means no limits, 
     =-1 means that the 'upper'/'left' row/col is out bounds 
@@ -272,7 +268,7 @@ def discard_closed_cells(closed_list, open_list, cells):
                 print("ya existe: " + str(cell.get_pos()))
 
             new_list.append(cell)
-
+    
     return new_list
 
 
