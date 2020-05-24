@@ -11,7 +11,7 @@ import pydot
 node_id = 0
 
 
-def id3(examples, ev_column, merit, tree_graf=None):
+def id3(examples, ev_column, attr, tree_graf=None):
     global node_id
     node_id += 1
 
@@ -26,13 +26,18 @@ def id3(examples, ev_column, merit, tree_graf=None):
         anytree.Node(ev_column[2], tree_graf, label=str(node_id))
         return
 
-    elif len(merit) <= 0:
+    elif len(attr) <= 0:
         raise Exception("No attributes left.")
 
     else:
-        best = merit[-1][0]
+        merits = calculate_merit(examples, ev_column[0], attr)
 
-        merit = merit[:-1]
+        best = merits[-1][0]
+
+        print("Atributo elegido: " + str(merits[-1]))
+
+        new_attr = attr[:]
+        new_attr.remove(best)
 
         if tree_graf is None:
             root = anytree.Node(best, label=str(node_id))
@@ -46,18 +51,13 @@ def id3(examples, ev_column, merit, tree_graf=None):
 
             node_value = anytree.Node(value, root, label=str(node_id))
 
-            id3(new_examples, ev_column, merit, node_value)
+            id3(new_examples, ev_column, new_attr, node_value)
 
     return root
 
 
-def alg(data, evaluation_column, positive, negative, output):
-    data
-
-    data[evaluation_column] = data[evaluation_column].replace(positive, True)
-    data[evaluation_column] = data[evaluation_column].replace(negative, False)
-
-    distribution = get_attribute_distribution(data, evaluation_column)
+def calculate_merit(data, evaluation_column, attr):
+    distribution = get_attribute_distribution(data, evaluation_column, attr)
 
     transformed_distribution = transform_distribution(distribution[0], distribution[1])
 
@@ -68,6 +68,26 @@ def alg(data, evaluation_column, positive, negative, output):
         merits.insert(0, (attr[0], merit))
 
     merits = sorted(merits, reverse=True, key=lambda x: x[1])
+
+    return merits
+
+
+def alg(data, evaluation_column, positive=None, negative=None, output="result"):
+    if positive is None:
+        ev_values = data[evaluation_column].unique()
+
+        if len(ev_values) == 2:
+            positive = ev_values[0]
+            negative = ev_values[1]
+        else:
+            raise Exception("La columna de evaluacion tiene mas de 2 valores posibles.")
+
+    data[evaluation_column] = data[evaluation_column].replace(positive, True)
+    data[evaluation_column] = data[evaluation_column].replace(negative, False)
+
+    attr = list(filter(lambda key: key != evaluation_column, data.keys()))
+    merits = calculate_merit(data, evaluation_column, attr)
+
     print("Meritos: " + str(merits))
 
     print('Ejemplos:')
@@ -75,13 +95,17 @@ def alg(data, evaluation_column, positive, negative, output):
 
     print("id3: ")
 
-    tri = id3(data, (evaluation_column, positive, negative), merits)
+    try:
+        result = id3(data, (evaluation_column, positive, negative), attr)
+    except Exception:
+        print("No quedan atributos.")
+        return
 
-    for pre, fill, node in anytree.RenderTree(tri):
+    for pre, fill, node in anytree.RenderTree(result):
         print("%s%s" % (pre, node.name))
 
     try:
-        UniqueDotExporter(tri).to_dotfile("results/" + output + ".dot")
+        UniqueDotExporter(result).to_dotfile("results/" + output + ".dot")
         (graph,) = pydot.graph_from_dot_file("results/" + output + ".dot")
         graph.write_png("results/" + output + ".png")
     except Exception:
@@ -138,15 +162,13 @@ def transform_distribution(dist, number_examples):
     return trans_dist
 
 
-def get_attribute_distribution(data, evaluation_column):
+def get_attribute_distribution(data, evaluation_column, keys):
     grouped = data.groupby(evaluation_column)
 
     number_examples = len(data)
 
     positives = grouped.get_group(True)
     negatives = grouped.get_group(False)
-
-    keys = list(filter(lambda key: key != evaluation_column, data.keys()))
 
     final_dist = []
 
@@ -199,9 +221,7 @@ def create_parser(demo_list):
     parser.add_argument("--examples", help="The name of the file that contains the list of examples.", type=str)
     parser.add_argument("--evaluation-column", help="The name of the column in attributes "
                                                     "that represents the evaluation value."
-                                                    "By default the last column of attributes will be chosen", type=str)
-    parser.add_argument("--positive-negative", help="The word or characters that represents "
-                                                    "the True or False value in the evaluation-column.", type=str)
+                                                    "By default the last column of attributes will be chosen.", type=str)
     parser.add_argument("--output", help="The name of the output file, "
                                          "by default it will be the name of the 'examples' file. "
                                          "DO NOT USE ANY EXTENSION, "
@@ -210,21 +230,26 @@ def create_parser(demo_list):
     return parser
 
 
-if __name__ == "__main__":
-    demo_list = ["Juego", "Edificios", "Creditos"]
-
-    parser = create_parser(demo_list)
-
-    args = parser.parse_args()
-
+def process_args(args):
     demo = parse_demo(args.demo)
+    header = None
+    examples = None
+    ev_column = None
 
+    # attribute and examples introduced
     if (args.attributes is not None) and (args.examples is not None):
         header = read_csv(args.attributes, header=None).values
         examples = read_csv(args.examples, names=header[0])
 
-        alg(examples, demo[2], demo[3], demo[4])
-    else:
+        # evaluation_column introduced
+        if args.evaluation_column is not None:
+            ev_column = args.evaluation_column
+        else:
+            # gets last column
+            ev_column = header[0][-1]
+
+    # attribute and examples not introduced
+    elif (args.attributes is None) and (args.examples is None):
         if args.demo is not None:
             demo = parse_demo(args.demo)
 
@@ -233,11 +258,16 @@ if __name__ == "__main__":
                 examples = read_csv(demo[1], names=header[0])
             else:
                 print("--demo debe contener uno de los siguientes valores: " + str(demo_list))
+
         else:
             demo = parse_demo("Jugar")
 
             header = read_csv(demo[0], header=None).values
             examples = read_csv(demo[1], names=header[0])
+    else:
+        print("Es necesario introducir --attribute y --examples simulaneamente. Si desea probar los casos de ejemoplo, "
+              "use la opcion --demo.")
+        return None
 
     if args.output is None:
         if demo is not None:
@@ -249,6 +279,27 @@ if __name__ == "__main__":
     else:
         output = args.output
 
-    alg(examples, demo[2], demo[3], demo[4], output)
+    return demo, header, examples, ev_column, output
 
-    print("Resultados generados en la carpeta results")
+
+if __name__ == "__main__":
+    demo_list = ["Juego", "Edificios", "Creditos"]
+
+    parser = create_parser(demo_list)
+
+    args = parser.parse_args()
+
+    try:
+        demo, header, examples, ev_column, output = process_args(args)
+
+        try:
+            if demo is not None:
+                alg(examples, demo[2], demo[3], demo[4], output)
+            else:
+                alg(examples, ev_column, output=output)
+
+            print("Resultados generados en la carpeta results bajo el nombre de " + output + ".")
+        except Exception as ex:
+            print("Error en la ejecucion: ", ex)
+    except TypeError:
+        print("Error en los argumentos.")
