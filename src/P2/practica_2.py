@@ -1,29 +1,40 @@
-import sys
 import os
 import argparse
-from pandas.io.parsers import read_csv
-import numpy as np
+import sys
 import math
-import anytree
-from anytree.exporter import UniqueDotExporter
-import pydot
 
-node_id = 0
+import pip
+
+
+def import_or_install(package):
+    try:
+        __import__(package)
+    except ImportError:
+        pip.main(['install', package])
+
+
+import_or_install("anytree")
+import_or_install("pydot")
+import_or_install("numpy")
+import_or_install("pandas")
+
+from pandas.io.parsers import read_csv
+import anytree
+import pydot
+import numpy as np
+from anytree.exporter import UniqueDotExporter
 
 
 def id3(examples, ev_column, attr, tree_graf=None):
-    global node_id
-    node_id += 1
-
     if len(examples) <= 0:
         return
 
     if examples[ev_column[0]].all():
-        anytree.Node(ev_column[1], tree_graf, label=str(node_id))
+        anytree.Node(ev_column[1], tree_graf)
         return
 
     elif (examples[ev_column[0]] == False).all():
-        anytree.Node(ev_column[2], tree_graf, label=str(node_id))
+        anytree.Node(ev_column[2], tree_graf)
         return
 
     elif len(attr) <= 0:
@@ -34,22 +45,20 @@ def id3(examples, ev_column, attr, tree_graf=None):
 
         best = merits[-1][0]
 
-        print("Atributo elegido: " + str(merits[-1]))
+        print("Atributo elegido: " + str(merits[-1]) + " Entre: " + str(merits) + '\n')
 
         new_attr = attr[:]
         new_attr.remove(best)
 
         if tree_graf is None:
-            root = anytree.Node(best, label=str(node_id))
+            root = anytree.Node(best)
         else:
-            root = anytree.Node(best, tree_graf, label=str(node_id))
+            root = anytree.Node(best, tree_graf)
 
         for value in examples[best].unique():
             new_examples = examples[examples[best] == value]
 
-            node_id += 1
-
-            node_value = anytree.Node(value, root, label=str(node_id))
+            node_value = anytree.Node(value, root)
 
             id3(new_examples, ev_column, new_attr, node_value)
 
@@ -82,18 +91,15 @@ def alg(data, evaluation_column, positive=None, negative=None, output="result"):
         else:
             raise Exception("La columna de evaluacion tiene mas de 2 valores posibles.")
 
+    print('Ejemplos:')
+    print(str(data) + '\n')
+
     data[evaluation_column] = data[evaluation_column].replace(positive, True)
     data[evaluation_column] = data[evaluation_column].replace(negative, False)
 
     attr = list(filter(lambda key: key != evaluation_column, data.keys()))
-    merits = calculate_merit(data, evaluation_column, attr)
 
-    print("Meritos: " + str(merits))
-
-    print('Ejemplos:')
-    print(data)
-
-    print("id3: ")
+    print("ID3:")
 
     try:
         result = id3(data, (evaluation_column, positive, negative), attr)
@@ -101,17 +107,25 @@ def alg(data, evaluation_column, positive=None, negative=None, output="result"):
         print("No quedan atributos.")
         return
 
+    print("Arbol de decision:\n")
+
     for pre, fill, node in anytree.RenderTree(result):
         print("%s%s" % (pre, node.name))
 
+    print()
+
     try:
-        UniqueDotExporter(result).to_dotfile("results/" + output + ".dot")
-        (graph,) = pydot.graph_from_dot_file("results/" + output + ".dot")
-        graph.write_png("results/" + output + ".png")
-    except Exception:
+        UniqueDotExporter(result).to_dotfile("./results/" + output + ".dot")
+        (graph,) = pydot.graph_from_dot_file("./results/" + output + ".dot")
+        graph.write_png("./results/" + output + ".png")
+    except Exception as ex:
         print("Error al generar el grafico, compruebe que pydot y graphviz estan "
               "instalados usando 'pip install pydot graphviz' y la carpeta 'results' existe en el mismo directorio "
-              "que practica_2.py y vuelva a intentarlo")
+              "que practica_2.py y vuelva a intentarlo.\n", ex)
+
+        exc_type, exc_obj, exc_tb = sys.exc_info()
+        fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
+        print(exc_type, fname, exc_tb.tb_lineno)
 
 
 def infor(p, n):
@@ -221,7 +235,8 @@ def create_parser(demo_list):
     parser.add_argument("--examples", help="The name of the file that contains the list of examples.", type=str)
     parser.add_argument("--evaluation-column", help="The name of the column in attributes "
                                                     "that represents the evaluation value."
-                                                    "By default the last column of attributes will be chosen.", type=str)
+                                                    "By default the last column of attributes will be chosen.",
+                        type=str)
     parser.add_argument("--output", help="The name of the output file, "
                                          "by default it will be the name of the 'examples' file. "
                                          "DO NOT USE ANY EXTENSION, "
@@ -236,7 +251,7 @@ def process_args(args):
     examples = None
     ev_column = None
 
-    # attribute and examples introduced
+    # attributes and examples introduced
     if (args.attributes is not None) and (args.examples is not None):
         header = read_csv(args.attributes, header=None).values
         examples = read_csv(args.examples, names=header[0])
@@ -248,7 +263,7 @@ def process_args(args):
             # gets last column
             ev_column = header[0][-1]
 
-    # attribute and examples not introduced
+    # attributes AND examples not introduced
     elif (args.attributes is None) and (args.examples is None):
         if args.demo is not None:
             demo = parse_demo(args.demo)
