@@ -35,11 +35,16 @@ class Bayes:
         return c
 
     @staticmethod
-    def get_classification(x, m, c):
+    def get_classification(x, m, c, classes=None):
         diff = (x - m)
 
-        mult = numpy.einsum('ijk,ikm->ik', diff[:, numpy.newaxis], numpy.linalg.pinv(c))
+        mult = numpy.einsum('ijk,ikm->im', diff[:, numpy.newaxis], numpy.linalg.pinv(c))
 
-        print(mult)
+        mult = numpy.einsum('ijk,ki->i', mult[:, numpy.newaxis], diff.T)
 
-        return numpy.einsum('ij,ji->j', mult, diff.T)
+        if classes is None:
+            c_type = numpy.where(mult == numpy.amin(mult))[0][0]
+        else:
+            c_type = classes[numpy.where(mult == numpy.amin(mult))][0]
+
+        return c_type, mult

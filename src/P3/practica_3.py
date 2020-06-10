@@ -1,8 +1,11 @@
 import pip
 import argparse
+import numpy
+import math
 import kmeans
 import bayes
-import numpy
+import lloyd
+
 
 def import_or_install(package):
     try:
@@ -83,16 +86,20 @@ def exec_bayes(file):
     else:
         alg = bayes.Bayes(list, True)
 
-    c = alg.execute(m)
+    return m, alg.execute(m)
 
-    test = numpy.array([3, 7])
 
-    c = numpy.array([[[ 2., -1.], [-1., 2.]],
-                     [[ 2., 1.], [ 1., 2.]]])
-    c = numpy.array([[[1., 0.], [0., 1.]],
-                     [[1., 0.], [0., 1.]]])
+def exec_lloyd(file, epsilon=math.pow(10,-10), c=None, k=10, r=0.1):
+    examples = read_csv(file, header=None)
 
-    print(bayes.Bayes.get_classification(test, m, c))
+    if c is None:
+        c = get_mean(examples)
+
+    ex = examples.iloc[:, :-1].to_numpy()
+
+    alg = lloyd.Lloyd(ex, epsilon, k, r)
+
+    return alg.execute(c)
 
 
 if __name__ == "__main__":
@@ -101,19 +108,37 @@ if __name__ == "__main__":
     #args = parser.parse_args()
 
     #v = numpy.array([[6.7, 3.43], [2.39, 2.94]])
-    v = numpy.array([[4.6, 3.0, 4.0, 0.0],
-                     [6.8, 3.4, 4.6, 0.7]])
+    #v = numpy.array([[4.6, 3.0, 4.0, 0.0],
+    #                 [6.8, 3.4, 4.6, 0.7]])
 
     #classes, v = exec_kmeans("data\Iris2Clases.txt", 2, 0.01, v)
 
     #test = numpy.array([2, 3])
-    #test = read_csv("data\TestIris01.txt", header=None)
-    #test = test.iloc[:, :-1].to_numpy()
     #print("Ejecutar" + str(v))
 
-    #print(kmeans.KMeans.get_classification(test, v))
+    #print(kmeans.KMeans.get_classification(test, v, classes))
 
-    exec_bayes("data\pruebabayes.txt")
-    #exec_bayes("data\Iris2Clases.txt")
+    #m, u = exec_bayes("data\pruebabayes.txt")
+    #m, u = exec_bayes("data\Iris2Clases.txt")
+    #print(bayes.Bayes.get_classification(test, m, u, classes))
 
 
+    #exec_lloyd("data\pruebabayes.txt", epsilon=0.1)
+    #c = exec_lloyd("data\Iris2Clases.txt")
+
+    #print(lloyd.Lloyd.get_classification(test, c, classes))
+
+    file = "data\Iris2Clases.txt"
+
+    classes, v = exec_kmeans(file, 2, 0.01)
+    m, u = exec_bayes(file)
+    c = exec_lloyd(file)
+
+    test = read_csv("data\TestIris01.txt", header=None)
+    test = test.iloc[:, :-1].to_numpy()
+
+    #test = numpy.array([3, 7])
+
+    print(kmeans.KMeans.get_classification(test, v, classes))
+    print(bayes.Bayes.get_classification(test, m, u, classes))
+    print(lloyd.Lloyd.get_classification(test, c, classes))

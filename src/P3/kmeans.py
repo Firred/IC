@@ -61,8 +61,14 @@ class KMeans:
         return numpy.sqrt(diff)
 
     @staticmethod
-    def get_classification(x, v):
+    def get_classification(x, v, classes=None):
         diff = (x - v) ** 2
 
         diff = numpy.sum(diff, axis=1)
-        return diff
+
+        if classes is None:
+            c_type = numpy.where(diff == numpy.amin(diff))[0][0]
+        else:
+            c_type = classes[numpy.where(diff == numpy.amin(diff))][0]
+
+        return c_type, diff
