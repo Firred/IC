@@ -1,5 +1,4 @@
 import numpy
-import math
 
 
 class KMeans:
@@ -7,6 +6,19 @@ class KMeans:
         self.b = b
         self.epsilon = epsilon
         self.x = x
+
+    def execute(self, v):
+        u = self.calculate_u(v)
+
+        new_v = self.calculate_v(u)
+
+        while (self.calculate_d(new_v, v) >= self.epsilon).all():
+            v = new_v
+            u = self.calculate_u(v)
+
+            new_v = self.calculate_v(u)
+
+        return new_v
 
     def calculate_u(self, v):
         d = self.dij(self.x, v)
@@ -19,15 +31,6 @@ class KMeans:
         tot_d = numpy.sum(d, axis=1)
 
         return d.T/tot_d
-
-    @staticmethod
-    def dij(x, v):
-        d = (x[:, numpy.newaxis] - v)
-        d = d**2
-
-        d = numpy.sum(d, axis=2)
-
-        return d
 
     def calculate_v(self, u):
         if self.b != 1:
@@ -42,24 +45,20 @@ class KMeans:
         return new_v.T
 
     @staticmethod
+    def dij(x, v):
+        d = (x[:, numpy.newaxis] - v)
+        d = d**2
+
+        d = numpy.sum(d, axis=2)
+
+        return d
+
+    @staticmethod
     def calculate_d(x, y):
         diff = (x - y)**2
 
         diff = numpy.sum(diff, axis=0)
         return numpy.sqrt(diff)
-
-    def execute(self, v):
-        u = self.calculate_u(v)
-
-        new_v = self.calculate_v(u)
-
-        while (self.calculate_d(new_v, v) >= self.epsilon).all():
-            v = new_v
-            u = self.calculate_u(v)
-
-            new_v = self.calculate_v(u)
-
-        return new_v
 
     @staticmethod
     def get_classification(x, v):
