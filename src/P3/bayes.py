@@ -45,6 +45,6 @@ class Bayes:
         if classes is None:
             c_type = numpy.where(mult == numpy.amin(mult))[0][0]
         else:
-            c_type = classes[numpy.where(mult == numpy.amin(mult))][0]
+            c_type = classes[numpy.where(mult == numpy.amin(mult))[0][0]]
 
         return c_type, mult

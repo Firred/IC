@@ -69,6 +69,6 @@ class KMeans:
         if classes is None:
             c_type = numpy.where(diff == numpy.amin(diff))[0][0]
         else:
-            c_type = classes[numpy.where(diff == numpy.amin(diff))][0]
+            c_type = classes[numpy.where(diff == numpy.amin(diff))[0][0]]
 
         return c_type, diff
