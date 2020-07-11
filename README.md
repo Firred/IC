@@ -8,7 +8,8 @@ Execution:
   
 ## P1.
 
-Install Tkinter and Numpy with **pip install tkinter numpy**. Execute python main.py in the folder src/P1/
+Install Tkinter and Numpy with **pip install tkinter numpy**. 
+Execute **python main.py** in the folder src/P1/
   
 ## P2.
 
