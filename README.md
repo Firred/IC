@@ -1,8 +1,6 @@
 # IC
 
-Prácticas pertenecientes a la asgnatura Ingeniería del Conocimiento de la Universidad Complutense de Madrid. Su uso y publicación es puramente academico, no me hago responsable de cualquier copia parcial o total del código.
-
-Practices belonging to the Ingeniería del Conocimiento course at the Complutense University of Madrid. Its use and publication is purely academic, I'm not resposible for any partial or total copy of the code.
+Practices belonging to the Ingeniería del Conocimiento course at the Complutense University of Madrid.
   
 Execution:
   
